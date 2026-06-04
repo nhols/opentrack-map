@@ -115,14 +115,20 @@ h1 {
 
 .filter-summary {
   display: flex;
+  align-items: center;
   min-width: 0;
   gap: 6px;
-  overflow: hidden;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filter-summary::-webkit-scrollbar {
+  display: none;
 }
 
 .summary-chip {
-  display: inline-flex;
-  align-items: center;
+  display: block;
+  flex: 0 0 auto;
   min-width: 0;
   max-width: 180px;
   height: 24px;
@@ -132,6 +138,7 @@ h1 {
   padding: 0 8px;
   font-size: 0.75rem;
   font-weight: 800;
+  line-height: 24px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -293,15 +300,15 @@ button svg {
 }
 
 .events-indicator {
-  color: var(--accent);
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  transform: rotate(-45deg);
 }
 
-.events-toggle[aria-expanded="true"] .events-indicator::before {
-  content: "↑";
-}
-
-.events-toggle[aria-expanded="false"] .events-indicator::before {
-  content: "↓";
+.events-toggle[aria-expanded="true"] .events-indicator {
+  transform: rotate(45deg);
 }
 
 .event-results {
