@@ -251,12 +251,68 @@ button svg {
 }
 
 .status-row {
-  min-height: 39px;
-  border-top: 1px solid var(--line);
-  padding: 10px 22px;
+  min-width: 0;
   color: var(--muted);
   font-size: 0.86rem;
   font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.events-bar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid #edf1ee;
+  padding: 6px 22px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.events-toggle {
+  height: 28px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  gap: 5px;
+  padding: 0 8px;
+  font-size: 0.8rem;
+  font-weight: 850;
+}
+
+.events-toggle:hover,
+.events-toggle[aria-expanded="true"] {
+  border-color: #cfd9d2;
+  background: #eef6f1;
+}
+
+.events-indicator {
+  color: var(--accent);
+}
+
+.events-toggle[aria-expanded="true"] .events-indicator::before {
+  content: "↑";
+}
+
+.events-toggle[aria-expanded="false"] .events-indicator::before {
+  content: "↓";
+}
+
+.event-results {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.panel:not(.is-events-open) .event-results {
+  display: none;
 }
 
 .sort-row {
@@ -486,18 +542,29 @@ button svg {
 @media (max-width: 760px) {
   .app-shell {
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(0, 58vh) minmax(0, 42vh);
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100dvh;
+    min-height: 100dvh;
   }
 
   .panel {
-    height: 58vh;
+    max-height: 64dvh;
     min-height: 0;
+    overflow: auto;
     border-right: 0;
     border-bottom: 1px solid var(--line);
   }
 
   .map-wrap {
-    height: 42vh;
+    height: auto;
     min-height: 0;
+  }
+
+  .masthead {
+    padding: 17px 22px 12px;
+  }
+
+  .filter-bar {
+    padding-bottom: 8px;
   }
 }

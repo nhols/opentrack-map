@@ -110,19 +110,34 @@
           </div>
         </form>
 
-        <div class="status-row" id="status">Ready</div>
-        <div class="sort-row" aria-label="Sort results">
-          <span>Sort</span>
-          <button class="sort-toggle" data-sort-field="date" type="button">
-            <span>Date</span>
-            <span class="sort-indicator" aria-hidden="true"></span>
+        <div class="events-bar">
+          <button
+            class="events-toggle"
+            id="eventsToggle"
+            type="button"
+            aria-controls="eventResults"
+            aria-expanded="true"
+          >
+            <i data-lucide="list"></i>
+            <span>Events</span>
+            <span class="events-indicator" aria-hidden="true"></span>
           </button>
-          <button class="sort-toggle" data-sort-field="mapped" type="button">
-            <span>Mapped</span>
-            <span class="sort-indicator" aria-hidden="true"></span>
-          </button>
+          <div class="status-row" id="status">Ready</div>
         </div>
-        <ol class="competition-list" id="competitionList"></ol>
+        <div class="event-results" id="eventResults">
+          <div class="sort-row" aria-label="Sort results">
+            <span>Sort</span>
+            <button class="sort-toggle" data-sort-field="date" type="button">
+              <span>Date</span>
+              <span class="sort-indicator" aria-hidden="true"></span>
+            </button>
+            <button class="sort-toggle" data-sort-field="mapped" type="button">
+              <span>Mapped</span>
+              <span class="sort-indicator" aria-hidden="true"></span>
+            </button>
+          </div>
+          <ol class="competition-list" id="competitionList"></ol>
+        </div>
       </aside>
 
       <section class="map-wrap" aria-label="Competition map">

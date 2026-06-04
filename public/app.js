@@ -2,6 +2,7 @@ const API_ROOT = "https://data.opentrack.run/api/competitions/";
 
 const state = {
   competitions: [],
+  eventsOpen: true,
   filtersOpen: false,
   markers: [],
   markerByKey: new Map(),
@@ -21,6 +22,7 @@ const elements = {
   filters: document.querySelector("#filters"),
   filterToggle: document.querySelector("#filterToggle"),
   filterSummary: document.querySelector("#filterSummary"),
+  eventsToggle: document.querySelector("#eventsToggle"),
   refreshButton: document.querySelector("#refreshButton"),
   fitButton: document.querySelector("#fitButton"),
   clearDatesButton: document.querySelector("#clearDatesButton"),
@@ -37,6 +39,7 @@ window.addEventListener("DOMContentLoaded", () => {
   initMap();
   initDatePicker();
   bindEvents();
+  setEventsOpen(!window.matchMedia("(max-width: 760px)").matches);
   updateSortButtons();
   loadCompetitions();
 });
@@ -72,6 +75,9 @@ function bindEvents() {
 
   elements.filterToggle.addEventListener("click", () => {
     setFiltersOpen(!state.filtersOpen);
+  });
+  elements.eventsToggle.addEventListener("click", () => {
+    setEventsOpen(!state.eventsOpen);
   });
   elements.refreshButton.addEventListener("click", () => loadCompetitions());
   elements.fitButton.addEventListener("click", () => fitMarkers());
@@ -123,6 +129,13 @@ function setFiltersOpen(open) {
   state.filtersOpen = open;
   elements.panel.classList.toggle("is-filters-open", open);
   elements.filterToggle.setAttribute("aria-expanded", String(open));
+}
+
+function setEventsOpen(open) {
+  state.eventsOpen = open;
+  elements.panel.classList.toggle("is-events-open", open);
+  elements.eventsToggle.setAttribute("aria-expanded", String(open));
+  requestAnimationFrame(() => state.map.invalidateSize());
 }
 
 function updateFilterSummary() {
