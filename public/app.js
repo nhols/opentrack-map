@@ -3,6 +3,7 @@ const LOCAL_PROXY = "/api/opentrack";
 
 const state = {
   competitions: [],
+  filtersOpen: false,
   markers: [],
   markerByKey: new Map(),
   markerLayer: null,
@@ -17,7 +18,10 @@ const state = {
 };
 
 const elements = {
+  panel: document.querySelector(".panel"),
   filters: document.querySelector("#filters"),
+  filterToggle: document.querySelector("#filterToggle"),
+  filterSummary: document.querySelector("#filterSummary"),
   refreshButton: document.querySelector("#refreshButton"),
   fitButton: document.querySelector("#fitButton"),
   clearDatesButton: document.querySelector("#clearDatesButton"),
@@ -56,8 +60,20 @@ function bindEvents() {
   elements.filters.addEventListener("submit", (event) => {
     event.preventDefault();
     loadCompetitions();
+    setFiltersOpen(false);
   });
 
+  elements.filters.addEventListener("change", () => {
+    updateFilterSummary();
+  });
+
+  elements.filters.addEventListener("input", () => {
+    updateFilterSummary();
+  });
+
+  elements.filterToggle.addEventListener("click", () => {
+    setFiltersOpen(!state.filtersOpen);
+  });
   elements.refreshButton.addEventListener("click", () => loadCompetitions());
   elements.fitButton.addEventListener("click", () => fitMarkers());
   elements.sortButtons.forEach((button) => {
@@ -70,6 +86,7 @@ function bindEvents() {
     state.datePicker?.clear();
     elements.dateFromInput.value = "";
     elements.dateToInput.value = "";
+    updateFilterSummary();
     loadCompetitions();
   });
 }
@@ -101,6 +118,36 @@ function renderCurrentCompetitions() {
   renderMarkers(competitions);
   updateLoadedStatus(state.totalCount, competitions);
   fitMarkers();
+}
+
+function setFiltersOpen(open) {
+  state.filtersOpen = open;
+  elements.panel.classList.toggle("is-filters-open", open);
+  elements.filterToggle.setAttribute("aria-expanded", String(open));
+}
+
+function updateFilterSummary() {
+  const summary = [];
+  const search = document.querySelector("#searchInput")?.value.trim();
+  const country = document.querySelector("#countryInput")?.value;
+  const type = document.querySelector("#typeInput")?.value;
+  const limit = document.querySelector("#limitInput")?.value;
+  const dateRange = getVisibleDateRange();
+
+  if (dateRange) summary.push(dateRange);
+  if (country) summary.push(country);
+  if (type) summary.push(typeLabel(type));
+  if (search) summary.push(`"${search}"`);
+  if (limit) summary.push(`Limit ${limit}`);
+
+  elements.filterSummary.replaceChildren(
+    ...summary.map((text) => {
+      const chip = document.createElement("span");
+      chip.className = "summary-chip";
+      chip.textContent = text;
+      return chip;
+    })
+  );
 }
 
 function buildParams(formData) {
@@ -467,6 +514,7 @@ function initDatePicker() {
   const end = addMonths(start, 1);
   state.datePicker.setDate([start, end], false);
   setDateInputs(start, end, state.datePicker);
+  updateFilterSummary();
 }
 
 function parseFilterDate(value) {
@@ -478,6 +526,17 @@ function parseFilterDate(value) {
 function setDateInputs(from, to, picker) {
   elements.dateFromInput.value = from ? picker.formatDate(from, "Y-m-d") : "";
   elements.dateToInput.value = to ? picker.formatDate(to, "Y-m-d") : "";
+  updateFilterSummary();
+}
+
+function getVisibleDateRange() {
+  const visibleInput = document.querySelector(".date-field input:not(#dateRangeInput)");
+  return visibleInput?.value || elements.dateRangeInput.value;
+}
+
+function typeLabel(type) {
+  const option = document.querySelector(`#typeInput option[value="${CSS.escape(type)}"]`);
+  return option?.textContent || type;
 }
 
 function startOfToday() {

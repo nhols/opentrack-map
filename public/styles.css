@@ -58,7 +58,7 @@ select {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 22px 22px 18px;
+  padding: 20px 22px 14px;
 }
 
 .eyebrow {
@@ -80,6 +80,61 @@ h1 {
   display: grid;
   gap: 14px;
   padding: 0 22px 18px;
+}
+
+.panel:not(.is-filters-open) .filters {
+  display: none;
+}
+
+.filter-bar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid #edf1ee;
+  padding: 8px 22px 10px;
+}
+
+.filter-toggle {
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: white;
+  color: var(--ink);
+  gap: 6px;
+  padding: 0 10px;
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.filter-toggle:hover,
+.filter-toggle[aria-expanded="true"] {
+  border-color: #b7c2ba;
+  background: #f4f7f4;
+}
+
+.filter-summary {
+  display: flex;
+  min-width: 0;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.summary-chip {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 180px;
+  height: 24px;
+  border-radius: 999px;
+  background: #eef4ef;
+  color: var(--muted);
+  padding: 0 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 label {
