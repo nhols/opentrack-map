@@ -6,5 +6,10 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js"
+  },
+  "dependencies": {
+    "flatpickr": "^4.6.13",
+    "leaflet": "^1.9.4",
+    "lucide": "^1.17.0"
   }
 }

@@ -4,20 +4,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>OpenTrack Map</title>
-    <link
-      rel="stylesheet"
-      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIINfQPDQSuTsg8P28S4P6qnmfMcc3yDLE="
-      crossorigin=""
-    />
+    <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
+    <link rel="stylesheet" href="/vendor/flatpickr/flatpickr.min.css" />
     <link rel="stylesheet" href="/styles.css" />
-    <script
-      defer
-      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-      crossorigin=""
-    ></script>
-    <script defer src="https://unpkg.com/lucide@latest"></script>
+    <script defer src="/vendor/leaflet/leaflet.js"></script>
+    <script defer src="/vendor/flatpickr/flatpickr.min.js"></script>
+    <script defer src="/vendor/lucide/lucide.min.js"></script>
     <script defer src="/app.js"></script>
   </head>
   <body>
@@ -69,25 +61,28 @@
             </label>
           </div>
 
-          <div class="filter-grid">
-            <label>
-              <span>When</span>
-              <select id="whenInput" name="when">
-                <option value="future">Future</option>
-                <option value="">All</option>
-                <option value="past">Past</option>
-              </select>
-            </label>
+          <label>
+            <span>Date range</span>
+            <span class="date-field">
+              <i data-lucide="calendar-days"></i>
+              <input id="dateRangeInput" type="text" placeholder="Pick dates" readonly />
+              <button id="clearDatesButton" class="field-icon-button" type="button" title="Clear dates">
+                <i data-lucide="x"></i>
+              </button>
+            </span>
+            <input id="dateFromInput" name="date_from" type="hidden" />
+            <input id="dateToInput" name="date_to" type="hidden" />
+          </label>
 
-            <label>
-              <span>Limit</span>
-              <select id="limitInput" name="page_size">
-                <option value="50">50</option>
-                <option value="100" selected>100</option>
-                <option value="200">200</option>
-              </select>
-            </label>
-          </div>
+          <label>
+            <span>Limit</span>
+            <select id="limitInput" name="page_size">
+              <option value="50">50</option>
+              <option value="100" selected>100</option>
+              <option value="200">200</option>
+              <option value="500">500</option>
+            </select>
+          </label>
 
           <div class="actions">
             <button class="primary-button" type="submit">
@@ -102,6 +97,17 @@
         </form>
 
         <div class="status-row" id="status">Ready</div>
+        <div class="sort-row" aria-label="Sort results">
+          <span>Sort</span>
+          <button class="sort-toggle" data-sort-field="date" type="button">
+            <span>Date</span>
+            <span class="sort-indicator" aria-hidden="true"></span>
+          </button>
+          <button class="sort-toggle" data-sort-field="mapped" type="button">
+            <span>Mapped</span>
+            <span class="sort-indicator" aria-hidden="true"></span>
+          </button>
+        </div>
         <ol class="competition-list" id="competitionList"></ol>
       </aside>
 

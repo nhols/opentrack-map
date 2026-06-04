@@ -3,7 +3,7 @@
 Tiny local webapp for loading OpenTrack competitions and plotting the records that include latitude and longitude.
 
 ```sh
-npm start
+make
 ```
 
 Then open `http://localhost:4173`.
