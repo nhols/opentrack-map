@@ -1,5 +1,4 @@
 const API_ROOT = "https://data.opentrack.run/api/competitions/";
-const LOCAL_PROXY = "/api/opentrack";
 
 const state = {
   competitions: [],
@@ -168,18 +167,7 @@ function buildParams(formData) {
 
 async function fetchCompetitions(params) {
   const liveUrl = `${API_ROOT}?${params}`;
-  const proxyUrl = `${LOCAL_PROXY}?${params}`;
-  const errors = [];
-
-  for (const url of [liveUrl, proxyUrl]) {
-    try {
-      return await fetchCompetitionPages(url, Number(params.get("page_size") || 100));
-    } catch (error) {
-      errors.push(error.message);
-    }
-  }
-
-  throw new Error(`Could not load OpenTrack data: ${errors.at(-1) || "unknown error"}`);
+  return fetchCompetitionPages(liveUrl, Number(params.get("page_size") || 100));
 }
 
 async function fetchCompetitionPages(firstUrl, limit) {
@@ -220,9 +208,7 @@ async function fetchJson(url) {
 }
 
 function normalizeNextUrl(nextUrl, firstUrl) {
-  if (!firstUrl.startsWith(LOCAL_PROXY)) return nextUrl;
-  const search = new URL(nextUrl, API_ROOT).search;
-  return `${LOCAL_PROXY}${search}`;
+  return new URL(nextUrl, firstUrl).href;
 }
 
 function normalizeCompetitions(results) {
