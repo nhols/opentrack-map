@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="OpenTrack Map">
+  <rect width="64" height="64" rx="14" fill="#b52a24" />
+  <path d="M9 51c11-9 26-14 46-15" fill="none" stroke="#fff4e8" stroke-width="3" opacity="0.95" />
+  <path d="M9 42c11-8 26-13 46-14" fill="none" stroke="#fff4e8" stroke-width="3" opacity="0.95" />
+  <path d="M9 33c11-7 26-11 46-12" fill="none" stroke="#fff4e8" stroke-width="3" opacity="0.95" />
+  <path d="M32 9c-8 0-14.5 6.3-14.5 14 0 10.7 14.5 25 14.5 25s14.5-14.3 14.5-25C46.5 15.3 40 9 32 9Z" fill="#fbfcfa" />
+  <circle cx="32" cy="23" r="5.2" fill="#1d7561" />
+  <path d="M20 54h24" stroke="#7f1915" stroke-width="4" stroke-linecap="round" opacity="0.35" />
+</svg>
