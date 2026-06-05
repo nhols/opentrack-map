@@ -1,6 +1,7 @@
 import {
   competitionMeta,
   competitorCountPillLabel,
+  createdAgoPillLabel,
   totalCompetitorsLabel
 } from "./competitions.js";
 import { elements } from "./elements.js";
@@ -115,6 +116,9 @@ function competitionMetaPills(competition) {
 
   const competitorLabel = competitorCountPillLabel(competition);
   if (competitorLabel) meta.append(pill(competitorLabel, { icon: "users" }));
+
+  const createdLabel = createdAgoPillLabel(competition);
+  if (createdLabel) meta.append(pill(createdLabel, { icon: "clock" }));
 
   const distanceLabel = competitionDistanceLabel(competition);
   if (distanceLabel) meta.append(pill(distanceLabel, { icon: "navigation" }));

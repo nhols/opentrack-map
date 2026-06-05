@@ -1,12 +1,10 @@
 import {
   groupCompetitionsByLocation,
-  locationTitle,
-  locationTooltip
+  locationTitle
 } from "./competitions.js";
 import { elements } from "./elements.js";
 import { popupHtml } from "./render.js";
 import { DEFAULT_CENTER, DEFAULT_ZOOM, state } from "./state.js";
-import { escapeHtml } from "./utils.js";
 
 export function initMap() {
   state.map = L.map("map", {
@@ -37,10 +35,6 @@ export function renderMarkers(competitions) {
     marker.bindPopup(popupHtml(group.competitions), {
       autoPan: false,
       maxWidth: 320
-    });
-    marker.bindTooltip(escapeHtml(locationTooltip(group)), {
-      direction: "top",
-      offset: [0, -18]
     });
     marker.on("click", () => setActiveCompetition(group.competitions[0]));
     state.markers.push(marker);

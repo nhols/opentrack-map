@@ -1,3 +1,15 @@
+const RELATIVE_TIME_FORMATTER = new Intl.RelativeTimeFormat("en-GB", {
+  numeric: "always"
+});
+const RELATIVE_TIME_UNITS = [
+  { unit: "year", seconds: 31536000 },
+  { unit: "month", seconds: 2629800 },
+  { unit: "week", seconds: 604800 },
+  { unit: "day", seconds: 86400 },
+  { unit: "hour", seconds: 3600 },
+  { unit: "minute", seconds: 60 }
+];
+
 export function normalizeCompetitions(results) {
   return results.map((item) => {
     const lat = Number(item.latitude);
@@ -63,18 +75,6 @@ export function locationTitle(group) {
   return [location, eventText, competitorLabel].filter(Boolean).join(": ");
 }
 
-export function locationTooltip(group) {
-  const location = group.competitions[0]?.locationLabel || "Competition location";
-  const eventLabel = group.competitions.length === 1 ? "event" : "events";
-  return [
-    location,
-    `${group.competitions.length.toLocaleString()} ${eventLabel}`,
-    totalCompetitorsLabel(group.competitions)
-  ]
-    .filter(Boolean)
-    .join(" • ");
-}
-
 export function competitionMeta(competition, includeLocation = true) {
   return [
     competition.displayDate,
@@ -89,6 +89,19 @@ export function competitionMeta(competition, includeLocation = true) {
 export function competitorCountPillLabel(competition) {
   const count = competitorCount(competition);
   return Number.isFinite(count) ? count.toLocaleString() : "";
+}
+
+export function createdAgoPillLabel(competition, now = new Date()) {
+  const created = parseDateTime(competition.created);
+  if (!created) return "";
+
+  const diffSeconds = (created.getTime() - now.getTime()) / 1000;
+  const absSeconds = Math.abs(diffSeconds);
+  if (absSeconds < 60) return "just now";
+
+  const relativeUnit = RELATIVE_TIME_UNITS.find(({ seconds }) => absSeconds >= seconds);
+  const value = Math.trunc(diffSeconds / relativeUnit.seconds);
+  return RELATIVE_TIME_FORMATTER.format(value, relativeUnit.unit);
 }
 
 export function totalCompetitorsLabel(competitions) {
