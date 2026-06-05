@@ -1,6 +1,12 @@
 # OpenTrack Map
 
-Tiny local webapp for loading OpenTrack competitions and plotting the records that include latitude and longitude.
+Tiny for vieing OpenTrack competitions on a map
+
+## Live Site
+
+Use it at <https://nhols.github.io/opentrack-map/>.
+
+## Local Development
 
 ```sh
 make
@@ -13,11 +19,6 @@ The app uses OpenTrack's documented competitions API:
 
 ## GitHub Pages
 
-This app is static: GitHub Pages can serve the `public/` folder directly.
+This app is static. GitHub Pages serves the checked-in `public/` folder via the workflow in `.github/workflows/pages.yml`.
 
-In GitHub:
-
-1. Open the repository settings.
-2. Go to Pages.
-3. Set the source to deploy from GitHub Actions.
-4. Use an action that uploads `public/` as the Pages artifact.
+Deployments run on pushes to `main` and publish to <https://nhols.github.io/opentrack-map/>.

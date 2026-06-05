@@ -1,0 +1,22 @@
+export const elements = {
+  panel: document.querySelector(".panel"),
+  filters: document.querySelector("#filters"),
+  filterToggle: document.querySelector("#filterToggle"),
+  filterSummary: document.querySelector("#filterSummary"),
+  eventsToggle: document.querySelector("#eventsToggle"),
+  refreshButton: document.querySelector("#refreshButton"),
+  fitButton: document.querySelector("#fitButton"),
+  clearDatesButton: document.querySelector("#clearDatesButton"),
+  searchInput: document.querySelector("#searchInput"),
+  countryInput: document.querySelector("#countryInput"),
+  typeInput: document.querySelector("#typeInput"),
+  limitInput: document.querySelector("#limitInput"),
+  dateFromInput: document.querySelector("#dateFromInput"),
+  dateToInput: document.querySelector("#dateToInput"),
+  dateRangeInput: document.querySelector("#dateRangeInput"),
+  sortRow: document.querySelector("#sortRow"),
+  sortButtons: document.querySelectorAll(".sort-toggle"),
+  sortHint: document.querySelector("#sortHint"),
+  list: document.querySelector("#competitionList"),
+  status: document.querySelector("#status")
+};
