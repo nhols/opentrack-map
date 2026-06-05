@@ -55,7 +55,7 @@ function initMap() {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
   }).addTo(state.map);
 
-  state.markerLayer = L.layerGroup().addTo(state.map);
+  state.markerLayer = createMarkerLayer().addTo(state.map);
 }
 
 function bindEvents() {
@@ -371,6 +371,7 @@ function renderMarkers(competitions) {
       icon: pinIcon(group.competitions.length),
       title: locationTitle(group)
     }).addTo(state.markerLayer);
+    marker.eventCount = group.competitions.length;
 
     marker.bindPopup(popupHtml(group.competitions), {
       autoPan: false,
@@ -381,6 +382,30 @@ function renderMarkers(competitions) {
     group.competitions.forEach((competition) => {
       state.markerByKey.set(competition.key, marker);
     });
+  });
+}
+
+function createMarkerLayer() {
+  if (!L.markerClusterGroup) return L.layerGroup();
+
+  return L.markerClusterGroup({
+    chunkedLoading: true,
+    maxClusterRadius: 46,
+    showCoverageOnHover: false,
+    spiderfyDistanceMultiplier: 1.25,
+    iconCreateFunction: clusterIcon
+  });
+}
+
+function clusterIcon(cluster) {
+  const count = cluster.getAllChildMarkers().reduce((total, marker) => total + (marker.eventCount || 1), 0);
+  const size = count >= 100 ? "large" : count >= 10 ? "medium" : "small";
+
+  return L.divIcon({
+    className: "",
+    html: `<span class="map-cluster map-cluster-${size}">${count.toLocaleString()}</span>`,
+    iconSize: [44, 44],
+    iconAnchor: [22, 22]
   });
 }
 
@@ -395,7 +420,21 @@ function focusCompetition(competition) {
   });
 
   const marker = state.markerByKey.get(competition.key);
-  marker?.openPopup();
+  openMarkerPopup(marker, target);
+}
+
+function openMarkerPopup(marker, target) {
+  if (!marker) return;
+
+  if (state.markerLayer.zoomToShowLayer) {
+    state.markerLayer.zoomToShowLayer(marker, () => {
+      marker.openPopup();
+      state.map.panTo(target, { animate: true });
+    });
+    return;
+  }
+
+  marker.openPopup();
   state.map.panTo(target, { animate: true });
 }
 

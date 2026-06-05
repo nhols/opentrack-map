@@ -512,6 +512,35 @@ button svg {
   line-height: 1;
 }
 
+.map-cluster {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border: 3px solid white;
+  border-radius: 999px;
+  background: var(--accent-dark);
+  box-shadow:
+    0 0 0 3px rgba(19, 88, 70, 0.24),
+    0 8px 20px rgba(23, 33, 28, 0.24);
+  color: white;
+  font-size: 0.82rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.map-cluster-medium {
+  width: 44px;
+  height: 44px;
+  background: #1f6f85;
+}
+
+.map-cluster-large {
+  width: 50px;
+  height: 50px;
+  background: var(--rose);
+}
+
 .popup-title {
   display: block;
   margin-bottom: 5px;
