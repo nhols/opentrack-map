@@ -128,17 +128,22 @@
           <div class="status-row" id="status">Ready</div>
         </div>
         <div class="event-results" id="eventResults">
-          <div class="sort-row" aria-label="Sort results">
+          <div class="sort-row" id="sortRow" aria-label="Sort results">
             <span>Sort</span>
             <button class="sort-toggle" data-sort-field="date" type="button">
               <span>Date</span>
               <span class="sort-indicator" aria-hidden="true"></span>
             </button>
-            <button class="sort-toggle" data-sort-field="mapped" type="button">
-              <span>Mapped</span>
+            <button class="sort-toggle" data-sort-field="added" type="button">
+              <span>Added</span>
+              <span class="sort-indicator" aria-hidden="true"></span>
+            </button>
+            <button class="sort-toggle" data-sort-field="near" type="button">
+              <span>Near me</span>
               <span class="sort-indicator" aria-hidden="true"></span>
             </button>
           </div>
+          <div class="sort-hint" id="sortHint"></div>
           <ol class="competition-list" id="competitionList"></ol>
         </div>
       </aside>

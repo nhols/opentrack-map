@@ -11,6 +11,7 @@ const state = {
   activeUrl: null,
   datePicker: null,
   totalCount: null,
+  userLocation: null,
   sort: {
     field: "date",
     direction: "asc"
@@ -29,7 +30,9 @@ const elements = {
   dateFromInput: document.querySelector("#dateFromInput"),
   dateToInput: document.querySelector("#dateToInput"),
   dateRangeInput: document.querySelector("#dateRangeInput"),
+  sortRow: document.querySelector("#sortRow"),
   sortButtons: document.querySelectorAll(".sort-toggle"),
+  sortHint: document.querySelector("#sortHint"),
   list: document.querySelector("#competitionList"),
   status: document.querySelector("#status")
 };
@@ -82,8 +85,9 @@ function bindEvents() {
   elements.refreshButton.addEventListener("click", () => loadCompetitions());
   elements.fitButton.addEventListener("click", () => fitMarkers());
   elements.sortButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      cycleSort(button.dataset.sortField);
+    button.addEventListener("click", async () => {
+      const shouldRender = await cycleSort(button.dataset.sortField);
+      if (!shouldRender) return;
       renderCurrentCompetitions();
     });
   });
@@ -273,9 +277,11 @@ function sortCompetitions(competitions) {
   if (!field || !direction) return sorted;
 
   sorted.sort((a, b) => {
-    if (field === "mapped") {
-      const mappedOrder = direction === "asc" ? compareMapped(b, a) : compareMapped(a, b);
-      return mappedOrder || compareDates(a, b);
+    if (field === "added") {
+      return compareAdded(a, b, direction);
+    }
+    if (field === "near") {
+      return compareDistance(a, b, direction) || compareDates(a, b);
     }
 
     return direction === "desc" ? compareDates(b, a) : compareDates(a, b);
@@ -284,25 +290,57 @@ function sortCompetitions(competitions) {
   return sorted;
 }
 
-function cycleSort(field) {
-  if (state.sort.field !== field) {
-    state.sort = { field, direction: "asc" };
-  } else if (state.sort.direction === "asc") {
-    state.sort.direction = "desc";
-  } else if (state.sort.direction === "desc") {
-    state.sort = { field: null, direction: null };
-  } else {
-    state.sort = { field, direction: "asc" };
+async function cycleSort(field) {
+  const nextSort = nextSortForField(field);
+
+  if (nextSort.field === "near" && nextSort.direction && !state.userLocation) {
+    setLoading(true);
+    setStatus("Waiting for location permission...");
+    try {
+      state.userLocation = await getUserLocation();
+    } catch (error) {
+      setStatus(error.message);
+      setLoading(false);
+      return false;
+    }
+    setLoading(false);
   }
 
+  state.sort = nextSort;
   updateSortButtons();
+  return true;
+}
+
+function nextSortForField(field) {
+  const defaultDirection = defaultSortDirection(field);
+  const alternateDirection = defaultDirection === "asc" ? "desc" : "asc";
+
+  if (state.sort.field !== field) {
+    return {
+      field,
+      direction: defaultDirection
+    };
+  } else if (state.sort.direction === defaultDirection) {
+    return { field, direction: alternateDirection };
+  } else if (state.sort.direction === alternateDirection) {
+    return { field: null, direction: null };
+  }
+
+  return {
+    field,
+    direction: defaultDirection
+  };
+}
+
+function defaultSortDirection(field) {
+  return field === "added" ? "desc" : "asc";
 }
 
 function updateSortButtons() {
   elements.sortButtons.forEach((button) => {
     const isActive = button.dataset.sortField === state.sort.field;
     const direction = isActive ? state.sort.direction : null;
-    const label = button.dataset.sortField === "mapped" ? "Mapped" : "Date";
+    const label = sortLabel(button.dataset.sortField);
     const description =
       direction === "asc" ? "ascending" : direction === "desc" ? "descending" : "off";
 
@@ -311,6 +349,34 @@ function updateSortButtons() {
     button.setAttribute("aria-pressed", String(Boolean(direction)));
     button.setAttribute("title", `${label} sort ${description}`);
   });
+  const hint = sortHintText();
+  elements.sortHint.textContent = hint;
+  elements.sortRow.classList.toggle("has-sort-hint", Boolean(hint));
+}
+
+function sortLabel(field) {
+  return {
+    added: "Added",
+    date: "Date",
+    near: "Near me"
+  }[field] || field;
+}
+
+function sortHintText() {
+  const { field, direction } = state.sort;
+  if (!field || !direction) return "";
+
+  if (field === "near") {
+    return direction === "desc" ? "closest last" : "closest first";
+  }
+  if (field === "added") {
+    return direction === "asc" ? "newest last" : "newest first";
+  }
+  if (field === "date") {
+    return direction === "desc" ? "soonest last" : "soonest first";
+  }
+
+  return "";
 }
 
 function compareDates(a, b) {
@@ -319,8 +385,31 @@ function compareDates(a, b) {
   return aTime - bTime || String(a.name).localeCompare(String(b.name));
 }
 
-function compareMapped(a, b) {
-  return Number(a.hasLocation) - Number(b.hasLocation);
+function compareAdded(a, b, direction) {
+  const aTime = parseDateTime(a.created)?.getTime() ?? Number.POSITIVE_INFINITY;
+  const bTime = parseDateTime(b.created)?.getTime() ?? Number.POSITIVE_INFINITY;
+  const aHasTime = Number.isFinite(aTime);
+  const bHasTime = Number.isFinite(bTime);
+
+  if (aHasTime && !bHasTime) return -1;
+  if (!aHasTime && bHasTime) return 1;
+  if (!aHasTime && !bHasTime) return compareDates(a, b);
+
+  const timeOrder = direction === "desc" ? bTime - aTime : aTime - bTime;
+  return timeOrder || compareDates(a, b);
+}
+
+function compareDistance(a, b, direction) {
+  const aDistance = distanceFromUser(a);
+  const bDistance = distanceFromUser(b);
+  const aHasDistance = Number.isFinite(aDistance);
+  const bHasDistance = Number.isFinite(bDistance);
+
+  if (aHasDistance && !bHasDistance) return -1;
+  if (!aHasDistance && bHasDistance) return 1;
+  if (!aHasDistance && !bHasDistance) return 0;
+
+  return direction === "desc" ? bDistance - aDistance : aDistance - bDistance;
 }
 
 function renderCompetitions(competitions) {
@@ -336,10 +425,33 @@ function renderCompetitions(competitions) {
     const item = document.createElement("li");
     item.className = "competition-item";
     item.dataset.url = competition.url || competition.home_page_url || "";
+    const link = safeExternalUrl(competition.home_page_url || competition.url);
 
     const button = document.createElement("button");
     button.type = "button";
     button.addEventListener("click", () => focusCompetition(competition));
+
+    const action = document.createElement("span");
+    action.className = "competition-actions";
+    if (link) {
+      const openLink = document.createElement("a");
+      openLink.href = link;
+      openLink.target = "_blank";
+      openLink.rel = "noreferrer noopener";
+      openLink.className = "competition-link";
+      openLink.setAttribute("aria-label", `Open ${competition.name}`);
+
+      const icon = document.createElement("i");
+      icon.setAttribute("data-lucide", "external-link");
+      icon.setAttribute("aria-hidden", "true");
+
+      const label = document.createElement("span");
+      label.className = "sr-only";
+      label.textContent = "Open";
+
+      openLink.append(icon, label);
+      action.append(openLink);
+    }
 
     const name = document.createElement("span");
     name.className = "competition-name";
@@ -352,13 +464,16 @@ function renderCompetitions(competitions) {
       pill(competition.locationLabel || "Location TBC"),
       pill(competition.hasLocation ? "Mapped" : "No coordinates", !competition.hasLocation)
     );
+    const distanceLabel = competitionDistanceLabel(competition);
+    if (distanceLabel) meta.append(pill(distanceLabel));
 
     button.append(name, meta);
-    item.append(button);
+    item.append(button, action);
     fragment.append(item);
   });
 
   elements.list.append(fragment);
+  if (window.lucide) window.lucide.createIcons();
 }
 
 function renderMarkers(competitions) {
@@ -503,31 +618,33 @@ function popupHtml(competitions) {
 }
 
 function competitionPopupHtml(competition) {
-  const link = safeExternalUrl(competition.home_page_url || competition.url);
-  const safeName = escapeHtml(competition.name);
   const safeMeta = escapeHtml(competitionMeta(competition));
 
   return `
-    <span class="popup-title">${safeName}</span>
-    <span class="popup-meta">${safeMeta}</span>
-    ${link ? `<a class="popup-link" href="${escapeHtml(link)}" target="_blank" rel="noreferrer noopener">Open</a>` : ""}
+    <span class="popup-event">
+      ${popupCompetitionNameHtml(competition)}
+      <span class="popup-meta">${safeMeta}</span>
+    </span>
   `;
 }
 
 function popupEventHtml(competition) {
-  const link = safeExternalUrl(competition.home_page_url || competition.url);
-  const safeName = escapeHtml(competition.name);
   const safeMeta = escapeHtml(competitionMeta(competition, false));
-  const nameHtml = link
-    ? `<a class="popup-event-name" href="${escapeHtml(link)}" target="_blank" rel="noreferrer noopener">${safeName}</a>`
-    : `<span class="popup-event-name">${safeName}</span>`;
 
   return `
     <span class="popup-event">
-      ${nameHtml}
+      ${popupCompetitionNameHtml(competition)}
       <span class="popup-meta">${safeMeta}</span>
     </span>
   `;
+}
+
+function popupCompetitionNameHtml(competition) {
+  const link = safeExternalUrl(competition.home_page_url || competition.url);
+  const safeName = escapeHtml(competition.name);
+  return link
+    ? `<a class="popup-event-name" href="${escapeHtml(link)}" target="_blank" rel="noreferrer noopener">${safeName}</a>`
+    : `<span class="popup-event-name">${safeName}</span>`;
 }
 
 function competitionMeta(competition, includeLocation = true) {
@@ -651,6 +768,64 @@ function parseFilterDate(value) {
   if (!value) return null;
   const date = new Date(`${value}T00:00:00Z`);
   return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function parseDateTime(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function getUserLocation() {
+  if (!navigator.geolocation) {
+    return Promise.reject(new Error("Location is not available in this browser."));
+  }
+
+  return new Promise((resolve, reject) => {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        });
+      },
+      () => reject(new Error("Location permission was not granted.")),
+      {
+        enableHighAccuracy: false,
+        maximumAge: 10 * 60 * 1000,
+        timeout: 10000
+      }
+    );
+  });
+}
+
+function distanceFromUser(competition) {
+  if (!state.userLocation || !competition.hasLocation) return Number.POSITIVE_INFINITY;
+  return distanceKm(state.userLocation.lat, state.userLocation.lng, competition.lat, competition.lng);
+}
+
+function distanceKm(fromLat, fromLng, toLat, toLng) {
+  const earthRadiusKm = 6371;
+  const deltaLat = toRadians(toLat - fromLat);
+  const deltaLng = toRadians(toLng - fromLng);
+  const lat1 = toRadians(fromLat);
+  const lat2 = toRadians(toLat);
+  const haversine =
+    Math.sin(deltaLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) ** 2;
+
+  return 2 * earthRadiusKm * Math.asin(Math.sqrt(haversine));
+}
+
+function toRadians(degrees) {
+  return (degrees * Math.PI) / 180;
+}
+
+function competitionDistanceLabel(competition) {
+  if (state.sort.field !== "near" || !state.userLocation || !competition.hasLocation) return "";
+  const distance = distanceFromUser(competition);
+  if (!Number.isFinite(distance)) return "";
+  return distance < 10 ? `${distance.toFixed(1)} km` : `${Math.round(distance).toLocaleString()} km`;
 }
 
 function setDateInputs(from, to, picker) {

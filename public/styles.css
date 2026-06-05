@@ -230,6 +230,15 @@ button svg {
   height: 17px;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
 .primary-button {
   background: var(--accent);
   color: white;
@@ -360,6 +369,24 @@ button svg {
   font-weight: 800;
 }
 
+.sort-row.has-sort-hint {
+  border-bottom: 0;
+}
+
+.sort-hint {
+  min-height: 19px;
+  border-bottom: 1px solid var(--line);
+  color: #7b887f;
+  padding: 0 22px 5px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.sort-hint:empty {
+  display: none;
+}
+
 .sort-toggle {
   height: 26px;
   min-width: 0;
@@ -416,6 +443,7 @@ button svg {
   border-bottom: 1px solid var(--line);
   background: transparent;
   padding: 0;
+  position: relative;
 }
 
 .competition-item:hover,
@@ -432,11 +460,41 @@ button svg {
   justify-content: stretch;
   justify-items: start;
   gap: 7px;
-  padding: 13px 22px;
+  padding: 13px 84px 13px 22px;
   border-radius: 0;
   background: transparent;
   color: inherit;
+  cursor: pointer;
   text-align: left;
+}
+
+.competition-actions {
+  position: absolute;
+  right: 22px;
+  bottom: 13px;
+}
+
+.competition-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: #d3e4da;
+  color: var(--accent-dark);
+  text-decoration: none;
+}
+
+.competition-link svg {
+  width: 15px;
+  height: 15px;
+}
+
+.competition-link:hover,
+.competition-link:focus-visible {
+  background: var(--accent);
+  color: white;
 }
 
 .competition-name {
@@ -570,7 +628,13 @@ button svg {
   padding-top: 9px;
 }
 
+.leaflet-popup-content > .popup-event:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
 .popup-event-name {
+  display: block;
   color: var(--ink);
   font-weight: 850;
   line-height: 1.25;
@@ -580,13 +644,6 @@ button svg {
 a.popup-event-name:hover {
   color: var(--accent-dark);
   text-decoration: underline;
-}
-
-.popup-link {
-  display: inline-block;
-  margin-top: 8px;
-  color: var(--accent-dark);
-  font-weight: 800;
 }
 
 .flatpickr-calendar {
