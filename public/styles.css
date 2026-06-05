@@ -267,6 +267,31 @@ button svg {
   white-space: nowrap;
 }
 
+.status-row.is-loading::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 7px;
+  border: 2px solid #cfd9d2;
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  vertical-align: -2px;
+  animation: status-spin 0.75s linear infinite;
+}
+
+@keyframes status-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .status-row.is-loading::before {
+    animation: none;
+  }
+}
+
 .events-bar {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);

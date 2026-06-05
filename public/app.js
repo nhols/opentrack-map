@@ -97,6 +97,7 @@ function bindEvents() {
 }
 
 async function loadCompetitions() {
+  setLoading(true);
   setStatus("Loading competitions...");
   elements.list.innerHTML = "";
   state.markerLayer.clearLayers();
@@ -114,6 +115,8 @@ async function loadCompetitions() {
   } catch (error) {
     setStatus(error.message);
     renderEmptyState();
+  } finally {
+    setLoading(false);
   }
 }
 
@@ -442,7 +445,7 @@ function renderEmptyState() {
 }
 
 function popupHtml(competition) {
-  const link = competition.home_page_url || competition.url || "";
+  const link = safeExternalUrl(competition.home_page_url || competition.url);
   const safeName = escapeHtml(competition.name);
   const safeMeta = escapeHtml(
     [competition.displayDate, competition.locationLabel, competition.type].filter(Boolean).join(" • ")
@@ -451,7 +454,7 @@ function popupHtml(competition) {
   return `
     <span class="popup-title">${safeName}</span>
     <span class="popup-meta">${safeMeta}</span>
-    ${link ? `<a class="popup-link" href="${escapeHtml(link)}" target="_blank" rel="noreferrer">Open</a>` : ""}
+    ${link ? `<a class="popup-link" href="${escapeHtml(link)}" target="_blank" rel="noreferrer noopener">Open</a>` : ""}
   `;
 }
 
@@ -464,6 +467,10 @@ function pill(text, missing = false) {
 
 function setStatus(message) {
   elements.status.textContent = message;
+}
+
+function setLoading(loading) {
+  elements.status.classList.toggle("is-loading", loading);
 }
 
 function formatDateRange(start, finish) {
@@ -579,4 +586,15 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function safeExternalUrl(value) {
+  if (!value) return "";
+
+  try {
+    const url = new URL(value, window.location.href);
+    return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+  } catch {
+    return "";
+  }
 }

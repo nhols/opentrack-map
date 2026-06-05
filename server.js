@@ -30,7 +30,15 @@ async function serveStatic(req, res) {
 }
 
 async function serveFileFromRoot(pathname, root, res, options = {}) {
-  const safePath = normalize(decodeURIComponent(pathname)).replace(/^(\.\.[/\\])+/, "");
+  let decodedPath;
+  try {
+    decodedPath = decodeURIComponent(pathname);
+  } catch {
+    send(res, 400, "Bad request");
+    return;
+  }
+
+  const safePath = normalize(decodedPath).replace(/^(\.\.[/\\])+/, "");
   const fileUrl = new URL(safePath.replace(/^\/+/, ""), root);
 
   if (!fileUrl.href.startsWith(root.href)) {
