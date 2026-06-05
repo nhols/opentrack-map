@@ -366,18 +366,21 @@ function renderMarkers(competitions) {
   state.markers = [];
   state.markerByKey.clear();
 
-  competitions.filter((competition) => competition.hasLocation).forEach((competition) => {
-    const marker = L.circleMarker([competition.lat, competition.lng], {
-      radius: 7,
-      color: "#135846",
-      weight: 2,
-      fillColor: "#1d7561",
-      fillOpacity: 0.82
+  groupCompetitionsByLocation(competitions).forEach((group) => {
+    const marker = L.marker([group.lat, group.lng], {
+      icon: pinIcon(group.competitions.length),
+      title: locationTitle(group)
     }).addTo(state.markerLayer);
-    marker.bindPopup(popupHtml(competition), { autoPan: false });
-    marker.on("click", () => setActiveCompetition(competition));
+
+    marker.bindPopup(popupHtml(group.competitions), {
+      autoPan: false,
+      maxWidth: 320
+    });
+    marker.on("click", () => setActiveCompetition(group.competitions[0]));
     state.markers.push(marker);
-    state.markerByKey.set(competition.key, marker);
+    group.competitions.forEach((competition) => {
+      state.markerByKey.set(competition.key, marker);
+    });
   });
 }
 
@@ -444,18 +447,100 @@ function renderEmptyState() {
   elements.list.append(item);
 }
 
-function popupHtml(competition) {
+function popupHtml(competitions) {
+  if (competitions.length === 1) return competitionPopupHtml(competitions[0]);
+
+  const [first] = competitions;
+  const safeLocation = escapeHtml(first.locationLabel || "Shared location");
+  const eventLabel = competitions.length === 1 ? "event" : "events";
+
+  return `
+    <span class="popup-title">${safeLocation}</span>
+    <span class="popup-meta">${competitions.length.toLocaleString()} ${eventLabel} at this location</span>
+    <span class="popup-event-list">
+      ${competitions.map((competition) => popupEventHtml(competition)).join("")}
+    </span>
+  `;
+}
+
+function competitionPopupHtml(competition) {
   const link = safeExternalUrl(competition.home_page_url || competition.url);
   const safeName = escapeHtml(competition.name);
-  const safeMeta = escapeHtml(
-    [competition.displayDate, competition.locationLabel, competition.type].filter(Boolean).join(" • ")
-  );
+  const safeMeta = escapeHtml(competitionMeta(competition));
 
   return `
     <span class="popup-title">${safeName}</span>
     <span class="popup-meta">${safeMeta}</span>
     ${link ? `<a class="popup-link" href="${escapeHtml(link)}" target="_blank" rel="noreferrer noopener">Open</a>` : ""}
   `;
+}
+
+function popupEventHtml(competition) {
+  const link = safeExternalUrl(competition.home_page_url || competition.url);
+  const safeName = escapeHtml(competition.name);
+  const safeMeta = escapeHtml(competitionMeta(competition, false));
+  const nameHtml = link
+    ? `<a class="popup-event-name" href="${escapeHtml(link)}" target="_blank" rel="noreferrer noopener">${safeName}</a>`
+    : `<span class="popup-event-name">${safeName}</span>`;
+
+  return `
+    <span class="popup-event">
+      ${nameHtml}
+      <span class="popup-meta">${safeMeta}</span>
+    </span>
+  `;
+}
+
+function competitionMeta(competition, includeLocation = true) {
+  return [
+    competition.displayDate,
+    includeLocation ? competition.locationLabel : "",
+    competition.type
+  ]
+    .filter(Boolean)
+    .join(" • ");
+}
+
+function groupCompetitionsByLocation(competitions) {
+  const groups = new Map();
+
+  competitions.filter((competition) => competition.hasLocation).forEach((competition) => {
+    const key = locationKey(competition);
+    const group = groups.get(key) || {
+      key,
+      lat: competition.lat,
+      lng: competition.lng,
+      competitions: []
+    };
+
+    group.competitions.push(competition);
+    groups.set(key, group);
+  });
+
+  return [...groups.values()];
+}
+
+function locationKey(competition) {
+  return `${competition.lat.toFixed(6)},${competition.lng.toFixed(6)}`;
+}
+
+function locationTitle(group) {
+  const location = group.competitions[0]?.locationLabel || "Competition location";
+  const count = group.competitions.length;
+  return count > 1 ? `${location}: ${count.toLocaleString()} events` : location;
+}
+
+function pinIcon(count) {
+  const hasMultiple = count > 1;
+  const label = hasMultiple ? `<span class="map-pin-count">${count.toLocaleString()}</span>` : "";
+
+  return L.divIcon({
+    className: "",
+    html: `<span class="map-pin${hasMultiple ? " has-multiple" : ""}">${label}</span>`,
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+    popupAnchor: [0, -17]
+  });
 }
 
 function pill(text, missing = false) {

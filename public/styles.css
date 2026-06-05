@@ -482,6 +482,36 @@ button svg {
   inset: 0;
 }
 
+.map-pin {
+  position: relative;
+  display: grid;
+  width: 18px;
+  height: 18px;
+  place-items: center;
+  border: 2px solid var(--accent-dark);
+  border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 4px 12px rgba(19, 88, 70, 0.24);
+  transform: translate(8px, 8px);
+}
+
+.map-pin.has-multiple {
+  width: 30px;
+  height: 30px;
+  border-width: 3px;
+  background: var(--amber);
+  box-shadow: 0 6px 16px rgba(126, 78, 11, 0.28);
+  color: white;
+  transform: translate(2px, 2px);
+}
+
+.map-pin-count {
+  color: white;
+  font-size: 0.72rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
 .popup-title {
   display: block;
   margin-bottom: 5px;
@@ -493,6 +523,34 @@ button svg {
   color: var(--muted);
   font-size: 0.82rem;
   line-height: 1.4;
+}
+
+.popup-event-list {
+  display: grid;
+  max-width: 280px;
+  max-height: 260px;
+  gap: 9px;
+  margin-top: 10px;
+  overflow-y: auto;
+}
+
+.popup-event {
+  display: grid;
+  gap: 2px;
+  border-top: 1px solid #edf1ee;
+  padding-top: 9px;
+}
+
+.popup-event-name {
+  color: var(--ink);
+  font-weight: 850;
+  line-height: 1.25;
+  text-decoration: none;
+}
+
+a.popup-event-name:hover {
+  color: var(--accent-dark);
+  text-decoration: underline;
 }
 
 .popup-link {
