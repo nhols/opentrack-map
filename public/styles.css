@@ -519,10 +519,18 @@ button svg {
 .pill {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   min-height: 22px;
   border-radius: 999px;
   background: #e3ebe5;
   padding: 2px 8px;
+}
+
+.pill svg {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+  stroke-width: 2.5;
 }
 
 .pill.is-missing {

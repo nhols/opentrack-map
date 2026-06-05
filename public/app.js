@@ -460,12 +460,16 @@ function renderCompetitions(competitions) {
     const meta = document.createElement("span");
     meta.className = "meta";
     meta.append(
-      pill(competition.displayDate || "Date TBC"),
-      pill(competition.locationLabel || "Location TBC"),
-      pill(competition.hasLocation ? "Mapped" : "No coordinates", !competition.hasLocation)
+      pill(competition.displayDate || "Date TBC", { icon: "calendar-days" }),
+      pill(competition.locationLabel || "Location TBC", {
+        icon: "map-pin",
+        missing: !competition.locationLabel
+      })
     );
+    const competitorLabel = competitorCountPillLabel(competition);
+    if (competitorLabel) meta.append(pill(competitorLabel, { icon: "users" }));
     const distanceLabel = competitionDistanceLabel(competition);
-    if (distanceLabel) meta.append(pill(distanceLabel));
+    if (distanceLabel) meta.append(pill(distanceLabel, { icon: "navigation" }));
 
     button.append(name, meta);
     item.append(button, action);
@@ -491,6 +495,10 @@ function renderMarkers(competitions) {
     marker.bindPopup(popupHtml(group.competitions), {
       autoPan: false,
       maxWidth: 320
+    });
+    marker.bindTooltip(escapeHtml(locationTooltip(group)), {
+      direction: "top",
+      offset: [0, -18]
     });
     marker.on("click", () => setActiveCompetition(group.competitions[0]));
     state.markers.push(marker);
@@ -607,10 +615,15 @@ function popupHtml(competitions) {
   const [first] = competitions;
   const safeLocation = escapeHtml(first.locationLabel || "Shared location");
   const eventLabel = competitions.length === 1 ? "event" : "events";
+  const competitorLabel = totalCompetitorsLabel(competitions);
 
   return `
     <span class="popup-title">${safeLocation}</span>
-    <span class="popup-meta">${competitions.length.toLocaleString()} ${eventLabel} at this location</span>
+    <span class="popup-meta">${escapeHtml(
+      [competitions.length.toLocaleString() + " " + eventLabel + " at this location", competitorLabel]
+        .filter(Boolean)
+        .join(" • ")
+    )}</span>
     <span class="popup-event-list">
       ${competitions.map((competition) => popupEventHtml(competition)).join("")}
     </span>
@@ -651,7 +664,20 @@ function competitionMeta(competition, includeLocation = true) {
   return [
     competition.displayDate,
     includeLocation ? competition.locationLabel : "",
+    competitorCountMetaLabel(competition),
     competition.type
+  ]
+    .filter(Boolean)
+    .join(" • ");
+}
+
+function locationTooltip(group) {
+  const location = group.competitions[0]?.locationLabel || "Competition location";
+  const eventLabel = group.competitions.length === 1 ? "event" : "events";
+  return [
+    location,
+    `${group.competitions.length.toLocaleString()} ${eventLabel}`,
+    totalCompetitorsLabel(group.competitions)
   ]
     .filter(Boolean)
     .join(" • ");
@@ -683,7 +709,9 @@ function locationKey(competition) {
 function locationTitle(group) {
   const location = group.competitions[0]?.locationLabel || "Competition location";
   const count = group.competitions.length;
-  return count > 1 ? `${location}: ${count.toLocaleString()} events` : location;
+  const competitorLabel = totalCompetitorsLabel(group.competitions);
+  const eventText = count > 1 ? `${count.toLocaleString()} events` : "1 event";
+  return [location, eventText, competitorLabel].filter(Boolean).join(": ");
 }
 
 function pinIcon(count) {
@@ -699,11 +727,45 @@ function pinIcon(count) {
   });
 }
 
-function pill(text, missing = false) {
+function pill(text, options = {}) {
+  const { icon, missing = false } = options;
   const span = document.createElement("span");
   span.className = `pill${missing ? " is-missing" : ""}`;
-  span.textContent = text;
+  if (icon) {
+    const iconElement = document.createElement("i");
+    iconElement.setAttribute("data-lucide", icon);
+    iconElement.setAttribute("aria-hidden", "true");
+    span.append(iconElement);
+  }
+  span.append(document.createTextNode(text));
   return span;
+}
+
+function competitorCountPillLabel(competition) {
+  const count = Number(competition.num_competitors);
+  if (!Number.isFinite(count) || count < 0) return "";
+  return count.toLocaleString();
+}
+
+function competitorCountMetaLabel(competition) {
+  const count = Number(competition.num_competitors);
+  if (!Number.isFinite(count) || count < 0) return "";
+  const label = count === 1 ? "competitor" : "competitors";
+  return `${count.toLocaleString()} ${label}`;
+}
+
+function totalCompetitorsLabel(competitions) {
+  const total = competitions.reduce((sum, competition) => {
+    const count = Number(competition.num_competitors);
+    return Number.isFinite(count) && count >= 0 ? sum + count : sum;
+  }, 0);
+
+  if (!competitions.some((competition) => {
+    const count = Number(competition.num_competitors);
+    return Number.isFinite(count) && count >= 0;
+  })) return "";
+  const label = total === 1 ? "competitor" : "competitors";
+  return `${total.toLocaleString()} ${label}`;
 }
 
 function setStatus(message) {
