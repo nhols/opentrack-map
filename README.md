@@ -1,6 +1,6 @@
 # OpenTrack Map
 
-Tiny for vieing OpenTrack competitions on a map
+Tiny webapp for viewing OpenTrack competitions on a map
 
 ## Live Site
 
