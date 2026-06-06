@@ -41,6 +41,9 @@ export function setProgressVisible(visible) {
   elements.loadProgress.hidden = !visible;
   if (!visible) {
     elements.loadProgressBar.style.width = "0%";
+    elements.loadProgress.removeAttribute("role");
+    elements.loadProgress.removeAttribute("aria-valuemin");
+    elements.loadProgress.removeAttribute("aria-valuemax");
     elements.loadProgress.removeAttribute("aria-valuenow");
   }
 }
@@ -59,8 +62,7 @@ export function updateLoadProgress(loaded, total) {
 }
 
 export function completeProgress() {
-  elements.loadProgressBar.style.width = "100%";
-  elements.loadProgress.setAttribute("aria-valuenow", "100");
+  setProgressVisible(false);
 }
 
 export function renderEmptyState() {
