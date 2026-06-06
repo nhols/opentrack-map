@@ -91,13 +91,13 @@ async function loadCompetitions() {
         const normalized = normalizeCompetitions(results);
 
         if (pageIndex === 0) {
-          state.competitions = normalized;
+          state.competitions = mergeUniqueCompetitions([], normalized);
           state.totalCount = count;
           hasRenderedFirstPage = true;
           setProgressVisible(true);
           renderCurrentCompetitions({ fit: true });
         } else {
-          state.competitions.push(...normalized);
+          state.competitions = mergeUniqueCompetitions(state.competitions, normalized);
           renderCurrentCompetitions();
         }
 
@@ -107,6 +107,7 @@ async function loadCompetitions() {
 
     if (requestId !== state.loadRequestId) return;
 
+    state.totalCount = state.competitions.length;
     renderCurrentCompetitions();
     completeProgress();
   } catch (error) {
@@ -137,6 +138,20 @@ function renderCurrentCompetitions({ fit = false } = {}) {
   renderMarkers(competitions);
   updateLoadedStatus(state.totalCount, competitions);
   if (fit) fitMarkers();
+}
+
+function mergeUniqueCompetitions(current, next) {
+  const merged = [...current];
+  const seen = new Set(current.map((competition) => competition.key).filter(Boolean));
+
+  next.forEach((competition) => {
+    if (!competition.key || !seen.has(competition.key)) {
+      merged.push(competition);
+      if (competition.key) seen.add(competition.key);
+    }
+  });
+
+  return merged;
 }
 
 function buildParams(formData) {
