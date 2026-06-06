@@ -51,6 +51,9 @@
             </button>
           </div>
           <div class="status-row" id="status">Ready</div>
+          <div class="load-progress" id="loadProgress" hidden>
+            <div class="load-progress-bar" id="loadProgressBar"></div>
+          </div>
         </header>
 
         <form class="filters" id="filters">
@@ -100,16 +103,6 @@
             </span>
             <input id="dateFromInput" name="date_from" type="hidden" />
             <input id="dateToInput" name="date_to" type="hidden" />
-          </label>
-
-          <label>
-            <span>Limit</span>
-            <select id="limitInput" name="page_size">
-              <option value="50">50</option>
-              <option value="100" selected>100</option>
-              <option value="200">200</option>
-              <option value="500">500</option>
-            </select>
           </label>
 
           <div class="actions">

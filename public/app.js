@@ -1,4 +1,4 @@
-import { fetchCompetitions } from "./modules/api.js";
+import { fetchCompetitionsIncrementally } from "./modules/api.js";
 import { elements } from "./modules/elements.js";
 import { getUserLocation } from "./modules/geo.js";
 import {
@@ -11,8 +11,11 @@ import { fitMarkers, focusCompetition, initMap, refreshMapLayout, renderMarkers 
 import {
   renderCompetitions,
   renderEmptyState,
+  completeProgress,
   setLoading,
+  setProgressVisible,
   setStatus,
+  updateLoadProgress,
   updateLoadedStatus
 } from "./modules/render.js";
 import { state } from "./modules/state.js";
@@ -62,36 +65,78 @@ function bindEvents() {
 }
 
 async function loadCompetitions() {
+  state.loadController?.abort();
+
+  const requestId = state.loadRequestId + 1;
+  state.loadRequestId = requestId;
+
+  const controller = new AbortController();
+  state.loadController = controller;
+  state.isLoadingMore = true;
+
   setLoading(true);
   setStatus("Loading competitions...");
-  elements.list.innerHTML = "";
-  state.markerLayer.clearLayers();
-  state.markers = [];
-  state.markerByKey.clear();
+  setProgressVisible(false);
 
   const formData = new FormData(elements.filters);
   const params = buildParams(formData);
+  let hasRenderedFirstPage = false;
 
   try {
-    const data = await fetchCompetitions(params);
-    state.competitions = normalizeCompetitions(data.results || []);
-    state.totalCount = data.count;
+    await fetchCompetitionsIncrementally(params, {
+      signal: controller.signal,
+      onPage: ({ results, count, pageIndex }) => {
+        if (requestId !== state.loadRequestId) return;
+
+        const normalized = normalizeCompetitions(results);
+
+        if (pageIndex === 0) {
+          state.competitions = normalized;
+          state.totalCount = count;
+          hasRenderedFirstPage = true;
+          setProgressVisible(true);
+          renderCurrentCompetitions({ fit: true });
+        } else {
+          state.competitions.push(...normalized);
+          renderCurrentCompetitions();
+        }
+
+        updateLoadProgress(state.competitions.length, state.totalCount);
+      }
+    });
+
+    if (requestId !== state.loadRequestId) return;
+
     renderCurrentCompetitions();
+    completeProgress();
   } catch (error) {
-    setStatus(error.message);
-    renderEmptyState();
+    if (error.name === "AbortError") return;
+
+    if (hasRenderedFirstPage && state.competitions.length) {
+      const total = Number.isFinite(state.totalCount) ? state.totalCount : state.competitions.length;
+      setStatus(
+        `Loaded ${state.competitions.length.toLocaleString()} of ${total.toLocaleString()} competitions. OpenTrack failed while loading more results.`
+      );
+    } else {
+      setStatus(error.message);
+      if (!state.competitions.length) renderEmptyState();
+    }
   } finally {
-    setLoading(false);
+    if (requestId === state.loadRequestId) {
+      setLoading(false);
+      state.isLoadingMore = false;
+      state.loadController = null;
+    }
   }
 }
 
-function renderCurrentCompetitions() {
+function renderCurrentCompetitions({ fit = false } = {}) {
   const formData = new FormData(elements.filters);
   const competitions = sortCompetitions(applyLocalFilters(state.competitions, formData));
   renderCompetitions(competitions, { onFocus: focusCompetition });
   renderMarkers(competitions);
   updateLoadedStatus(state.totalCount, competitions);
-  fitMarkers();
+  if (fit) fitMarkers();
 }
 
 function buildParams(formData) {
@@ -102,7 +147,9 @@ function buildParams(formData) {
     if (clean) params.set(key, clean);
   }
 
-  if (!params.has("page_size")) params.set("page_size", "100");
+  params.delete("page_size");
+  params.delete("limit");
+  params.delete("offset");
   if (!params.has("when") && !params.has("date_from") && !params.has("date_to")) {
     params.set("when", "future");
   }
@@ -120,10 +167,10 @@ async function cycleSort(field) {
       state.userLocation = await getUserLocation();
     } catch (error) {
       setStatus(error.message);
-      setLoading(false);
+      setLoading(state.isLoadingMore);
       return false;
     }
-    setLoading(false);
+    setLoading(state.isLoadingMore);
   }
 
   state.sort = nextSort;

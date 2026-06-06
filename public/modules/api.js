@@ -1,36 +1,40 @@
 const API_ROOT = "https://data.opentrack.run/api/competitions/";
-const MAX_PAGES = 10;
+export const PAGE_LIMIT = 10;
 
-export async function fetchCompetitions(params) {
-  const liveUrl = `${API_ROOT}?${params}`;
-  return fetchCompetitionPages(liveUrl, Number(params.get("page_size") || 100));
-}
+export async function fetchCompetitionsIncrementally(params, { signal, onPage } = {}) {
+  const firstParams = new URLSearchParams(params);
+  firstParams.delete("page_size");
+  firstParams.delete("limit");
+  firstParams.delete("offset");
+  firstParams.set("limit", String(PAGE_LIMIT));
+  firstParams.set("offset", "0");
 
-async function fetchCompetitionPages(firstUrl, limit) {
-  const results = [];
-  let count = 0;
-  let nextUrl = firstUrl;
-  let pagesRead = 0;
+  let nextUrl = `${API_ROOT}?${firstParams}`;
+  let pageIndex = 0;
 
-  while (nextUrl && results.length < limit && pagesRead < MAX_PAGES) {
-    const page = await fetchJson(nextUrl);
+  while (nextUrl) {
+    const page = await fetchJson(nextUrl, { signal });
     const pageResults = Array.isArray(page.results) ? page.results : [];
-    count = Number.isFinite(page.count) ? page.count : results.length + pageResults.length;
-    results.push(...pageResults);
-    pagesRead += 1;
+    const count = Number(page.count);
+
+    await onPage?.({
+      results: pageResults,
+      count: Number.isFinite(count) ? count : pageResults.length,
+      next: page.next,
+      pageIndex
+    });
 
     if (!page.next || !pageResults.length) break;
-    nextUrl = new URL(page.next, firstUrl).href;
+    nextUrl = new URL(page.next, API_ROOT).href;
+    pageIndex += 1;
   }
-
-  return {
-    count,
-    results: results.slice(0, limit)
-  };
 }
 
-async function fetchJson(url) {
-  const response = await fetch(url, { headers: { accept: "application/json" } });
+async function fetchJson(url, { signal } = {}) {
+  const response = await fetch(url, {
+    signal,
+    headers: { accept: "application/json" }
+  });
   const type = response.headers.get("content-type") || "";
 
   if (!response.ok) {

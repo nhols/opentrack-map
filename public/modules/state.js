@@ -11,6 +11,9 @@ export const state = {
   map: null,
   activeUrl: null,
   datePicker: null,
+  loadController: null,
+  loadRequestId: 0,
+  isLoadingMore: false,
   totalCount: null,
   userLocation: null,
   sort: {

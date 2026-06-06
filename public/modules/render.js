@@ -37,6 +37,32 @@ export function updateLoadedStatus(totalCount, visibleCompetitions) {
   setStatus(`Showing ${shown.toLocaleString()} matches; ${mapped.toLocaleString()} mapped.`);
 }
 
+export function setProgressVisible(visible) {
+  elements.loadProgress.hidden = !visible;
+  if (!visible) {
+    elements.loadProgressBar.style.width = "0%";
+    elements.loadProgress.removeAttribute("aria-valuenow");
+  }
+}
+
+export function updateLoadProgress(loaded, total) {
+  const safeTotal = Number.isFinite(total) && total > 0 ? total : loaded;
+  const percent = safeTotal > 0 ? Math.min(100, Math.round((loaded / safeTotal) * 100)) : 0;
+
+  elements.loadProgressBar.style.width = `${percent}%`;
+  elements.loadProgress.setAttribute("role", "progressbar");
+  elements.loadProgress.setAttribute("aria-valuemin", "0");
+  elements.loadProgress.setAttribute("aria-valuemax", "100");
+  elements.loadProgress.setAttribute("aria-valuenow", String(percent));
+
+  setStatus(`Loaded ${loaded.toLocaleString()} of ${safeTotal.toLocaleString()} competitions...`);
+}
+
+export function completeProgress() {
+  elements.loadProgressBar.style.width = "100%";
+  elements.loadProgress.setAttribute("aria-valuenow", "100");
+}
+
 export function renderEmptyState() {
   const item = document.createElement("li");
   item.className = "competition-item";
