@@ -2,7 +2,6 @@ export const elements = {
   panel: document.querySelector(".panel"),
   filters: document.querySelector("#filters"),
   filterToggle: document.querySelector("#filterToggle"),
-  filterSummary: document.querySelector("#filterSummary"),
   eventsToggle: document.querySelector("#eventsToggle"),
   refreshButton: document.querySelector("#refreshButton"),
   fitButton: document.querySelector("#fitButton"),

@@ -113,6 +113,7 @@ function competitionMetaPills(competition) {
       missing: !competition.locationLabel
     })
   );
+  if (!competition.hasLocation) meta.append(pill("Unmapped", { icon: "map-pin-off", missing: true }));
 
   const competitorLabel = competitorCountPillLabel(competition);
   if (competitorLabel) meta.append(pill(competitorLabel, { icon: "users" }));

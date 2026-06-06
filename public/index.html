@@ -19,28 +19,39 @@
     <main class="app-shell">
       <aside class="panel" aria-label="Competition controls and results">
         <header class="masthead">
-          <div>
+          <div class="masthead-main">
             <p class="eyebrow">OpenTrack</p>
             <h1>Competition Map</h1>
           </div>
-          <button class="icon-button" id="refreshButton" type="button" title="Refresh">
-            <i data-lucide="refresh-cw"></i>
-          </button>
+          <div class="masthead-actions">
+            <button
+              class="icon-button"
+              id="filterToggle"
+              type="button"
+              aria-label="Filters"
+              aria-controls="filters"
+              aria-expanded="false"
+              title="Filters"
+            >
+              <i data-lucide="search"></i>
+            </button>
+            <button
+              class="icon-button"
+              id="eventsToggle"
+              type="button"
+              aria-label="Events"
+              aria-controls="eventResults"
+              aria-expanded="true"
+              title="Events"
+            >
+              <i data-lucide="list"></i>
+            </button>
+            <button class="icon-button" id="refreshButton" type="button" aria-label="Refresh" title="Refresh">
+              <i data-lucide="refresh-cw"></i>
+            </button>
+          </div>
+          <div class="status-row" id="status">Ready</div>
         </header>
-
-        <div class="filter-bar">
-          <button
-            class="filter-toggle"
-            id="filterToggle"
-            type="button"
-            aria-controls="filters"
-            aria-expanded="false"
-          >
-            <i data-lucide="sliders-horizontal"></i>
-            <span>Filters</span>
-          </button>
-          <div class="filter-summary" id="filterSummary"></div>
-        </div>
 
         <form class="filters" id="filters">
           <label>
@@ -113,20 +124,6 @@
           </div>
         </form>
 
-        <div class="events-bar">
-          <button
-            class="events-toggle"
-            id="eventsToggle"
-            type="button"
-            aria-controls="eventResults"
-            aria-expanded="true"
-          >
-            <i data-lucide="list"></i>
-            <span>Events</span>
-            <span class="events-indicator" aria-hidden="true"></span>
-          </button>
-          <div class="status-row" id="status">Ready</div>
-        </div>
         <div class="event-results" id="eventResults">
           <div class="sort-row" id="sortRow" aria-label="Sort results">
             <button class="sort-toggle" data-sort-field="date" type="button">

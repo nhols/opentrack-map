@@ -5,8 +5,7 @@ import {
   addMonths,
   applyLocalFilters,
   normalizeCompetitions,
-  startOfToday,
-  typeLabel
+  startOfToday
 } from "./modules/competitions.js";
 import { fitMarkers, focusCompetition, initMap, renderMarkers } from "./modules/map.js";
 import {
@@ -36,14 +35,15 @@ function bindEvents() {
     setFiltersOpen(false);
   });
 
-  elements.filters.addEventListener("change", updateFilterSummary);
-  elements.filters.addEventListener("input", updateFilterSummary);
-
   elements.filterToggle.addEventListener("click", () => {
-    setFiltersOpen(!state.filtersOpen);
+    const nextOpen = !state.filtersOpen;
+    setFiltersOpen(nextOpen);
+    if (nextOpen && isMobilePanel()) setEventsOpen(false);
   });
   elements.eventsToggle.addEventListener("click", () => {
-    setEventsOpen(!state.eventsOpen);
+    const nextOpen = !state.eventsOpen;
+    setEventsOpen(nextOpen);
+    if (nextOpen && isMobilePanel()) setFiltersOpen(false);
   });
   elements.refreshButton.addEventListener("click", () => loadCompetitions());
   elements.fitButton.addEventListener("click", () => fitMarkers());
@@ -57,7 +57,6 @@ function bindEvents() {
     state.datePicker?.clear();
     elements.dateFromInput.value = "";
     elements.dateToInput.value = "";
-    updateFilterSummary();
     loadCompetitions();
   });
 }
@@ -163,28 +162,8 @@ function setEventsOpen(open) {
   requestAnimationFrame(() => state.map.invalidateSize());
 }
 
-function updateFilterSummary() {
-  const summary = [];
-  const search = elements.searchInput.value.trim();
-  const country = elements.countryInput.value;
-  const type = elements.typeInput.value;
-  const limit = elements.limitInput.value;
-  const dateRange = getVisibleDateRange();
-
-  if (dateRange) summary.push(dateRange);
-  if (country) summary.push(country);
-  if (type) summary.push(typeLabel(elements.typeInput, type));
-  if (search) summary.push(`"${search}"`);
-  if (limit) summary.push(`Limit ${limit}`);
-
-  elements.filterSummary.replaceChildren(...summary.map(summaryChip));
-}
-
-function summaryChip(text) {
-  const chip = document.createElement("span");
-  chip.className = "summary-chip";
-  chip.textContent = text;
-  return chip;
+function isMobilePanel() {
+  return window.matchMedia("(max-width: 760px)").matches;
 }
 
 function initDatePicker() {
@@ -217,16 +196,9 @@ function initDatePicker() {
   const end = addMonths(start, 1);
   state.datePicker.setDate([start, end], false);
   setDateInputs(start, end, state.datePicker);
-  updateFilterSummary();
 }
 
 function setDateInputs(from, to, picker) {
   elements.dateFromInput.value = from ? picker.formatDate(from, "Y-m-d") : "";
   elements.dateToInput.value = to ? picker.formatDate(to, "Y-m-d") : "";
-  updateFilterSummary();
-}
-
-function getVisibleDateRange() {
-  const visibleInput = document.querySelector(".date-field input:not(#dateRangeInput)");
-  return visibleInput?.value || elements.dateRangeInput.value;
 }
