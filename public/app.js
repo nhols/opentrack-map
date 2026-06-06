@@ -7,7 +7,7 @@ import {
   normalizeCompetitions,
   startOfToday
 } from "./modules/competitions.js";
-import { fitMarkers, focusCompetition, initMap, renderMarkers } from "./modules/map.js";
+import { fitMarkers, focusCompetition, initMap, refreshMapLayout, renderMarkers } from "./modules/map.js";
 import {
   renderCompetitions,
   renderEmptyState,
@@ -153,13 +153,14 @@ function setFiltersOpen(open) {
   state.filtersOpen = open;
   elements.panel.classList.toggle("is-filters-open", open);
   elements.filterToggle.setAttribute("aria-expanded", String(open));
+  refreshMapLayout();
 }
 
 function setEventsOpen(open) {
   state.eventsOpen = open;
   elements.panel.classList.toggle("is-events-open", open);
   elements.eventsToggle.setAttribute("aria-expanded", String(open));
-  requestAnimationFrame(() => state.map.invalidateSize());
+  refreshMapLayout();
 }
 
 function isMobilePanel() {

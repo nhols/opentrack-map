@@ -6,6 +6,10 @@ import { elements } from "./elements.js";
 import { popupHtml } from "./render.js";
 import { DEFAULT_CENTER, DEFAULT_ZOOM, state } from "./state.js";
 
+let resizeObserver = null;
+let refreshFrame = null;
+let refreshTimer = null;
+
 export function initMap() {
   state.map = L.map("map", {
     zoomControl: false,
@@ -18,6 +22,8 @@ export function initMap() {
   }).addTo(state.map);
 
   state.markerLayer = createMarkerLayer().addTo(state.map);
+  observeMapResize();
+  refreshMapLayout();
 }
 
 export function renderMarkers(competitions) {
@@ -59,6 +65,8 @@ export function focusCompetition(competition) {
 }
 
 export function fitMarkers() {
+  refreshMapLayout();
+
   if (!state.markers.length) {
     state.map.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
     return;
@@ -68,6 +76,22 @@ export function fitMarkers() {
   state.map.fitBounds(group.getBounds().pad(0.18), {
     animate: true,
     maxZoom: 12
+  });
+}
+
+export function refreshMapLayout() {
+  if (!state.map) return;
+
+  if (refreshFrame) cancelAnimationFrame(refreshFrame);
+  if (refreshTimer) clearTimeout(refreshTimer);
+
+  refreshFrame = requestAnimationFrame(() => {
+    refreshFrame = null;
+    invalidateMapSize();
+    refreshTimer = setTimeout(() => {
+      refreshTimer = null;
+      invalidateMapSize();
+    }, 120);
   });
 }
 
@@ -81,6 +105,19 @@ function createMarkerLayer() {
     spiderfyDistanceMultiplier: 1.25,
     iconCreateFunction: clusterIcon
   });
+}
+
+function observeMapResize() {
+  const mapElement = document.querySelector("#map");
+  if (!mapElement || !window.ResizeObserver) return;
+
+  resizeObserver?.disconnect();
+  resizeObserver = new ResizeObserver(refreshMapLayout);
+  resizeObserver.observe(mapElement);
+}
+
+function invalidateMapSize() {
+  state.map.invalidateSize({ pan: false });
 }
 
 function clusterIcon(cluster) {
