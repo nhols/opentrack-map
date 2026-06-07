@@ -1,5 +1,6 @@
 const API_ROOT = "https://data.opentrack.run/api/competitions/";
 export const PAGE_LIMIT = 10;
+const BACKGROUND_PAGE_CONCURRENCY = 5;
 
 export async function fetchCompetitionsIncrementally(params, { signal, onPage } = {}) {
   const firstParams = new URLSearchParams(params);
@@ -9,25 +10,66 @@ export async function fetchCompetitionsIncrementally(params, { signal, onPage } 
   firstParams.set("limit", String(PAGE_LIMIT));
   firstParams.set("offset", "0");
 
-  let nextUrl = `${API_ROOT}?${firstParams}`;
-  let pageIndex = 0;
+  const firstPage = await fetchJson(`${API_ROOT}?${firstParams}`, { signal });
+  const firstResults = Array.isArray(firstPage.results) ? firstPage.results : [];
+  const firstCount = Number(firstPage.count);
+  const totalCount = Number.isFinite(firstCount) ? firstCount : firstResults.length;
 
-  while (nextUrl) {
-    const page = await fetchJson(nextUrl, { signal });
-    const pageResults = Array.isArray(page.results) ? page.results : [];
-    const count = Number(page.count);
+  await onPage?.({
+    results: firstResults,
+    count: totalCount,
+    next: firstPage.next,
+    pageIndex: 0
+  });
 
-    await onPage?.({
-      results: pageResults,
-      count: Number.isFinite(count) ? count : pageResults.length,
-      next: page.next,
-      pageIndex
+  const totalPages = Math.ceil(totalCount / PAGE_LIMIT);
+  if (!firstPage.next || !firstResults.length || totalPages <= 1) return;
+
+  const remainingPages = [];
+  for (let pageIndex = 1; pageIndex < totalPages; pageIndex += 1) {
+    const pageParams = new URLSearchParams(firstParams);
+    pageParams.set("offset", String(pageIndex * PAGE_LIMIT));
+    remainingPages.push({
+      pageIndex,
+      url: `${API_ROOT}?${pageParams}`
     });
-
-    if (!page.next || !pageResults.length) break;
-    nextUrl = new URL(page.next, API_ROOT).href;
-    pageIndex += 1;
   }
+
+  await fetchPagesConcurrently(remainingPages, {
+    count: totalCount,
+    onPage,
+    signal
+  });
+}
+
+async function fetchPagesConcurrently(pages, { count, onPage, signal }) {
+  let nextIndex = 0;
+  let firstError = null;
+  const workerCount = Math.min(BACKGROUND_PAGE_CONCURRENCY, pages.length);
+
+  async function worker() {
+    while (nextIndex < pages.length && !firstError) {
+      if (signal?.aborted) throw abortError();
+
+      const pageInfo = pages[nextIndex];
+      nextIndex += 1;
+
+      try {
+        const page = await fetchJson(pageInfo.url, { signal });
+        await onPage?.({
+          results: Array.isArray(page.results) ? page.results : [],
+          count: Number.isFinite(Number(page.count)) ? Number(page.count) : count,
+          next: page.next,
+          pageIndex: pageInfo.pageIndex
+        });
+      } catch (error) {
+        firstError = error;
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: workerCount }, worker));
+  if (firstError) throw firstError;
 }
 
 async function fetchJson(url, { signal } = {}) {
@@ -45,4 +87,10 @@ async function fetchJson(url, { signal } = {}) {
   }
 
   return response.json();
+}
+
+function abortError() {
+  const error = new Error("Aborted");
+  error.name = "AbortError";
+  return error;
 }
