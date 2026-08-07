@@ -1,8 +1,9 @@
-const API_ROOT = "https://data.opentrack.run/api/competitions/";
-export const PAGE_LIMIT = 10;
+const LOCAL_API_ROOT = "/api/competitions";
+export const PAGE_LIMIT = 100;
 const BACKGROUND_PAGE_CONCURRENCY = 5;
 
 export async function fetchCompetitionsIncrementally(params, { signal, onPage } = {}) {
+  const apiRoot = competitionApiRoot();
   const firstParams = new URLSearchParams(params);
   firstParams.delete("page_size");
   firstParams.delete("limit");
@@ -10,7 +11,7 @@ export async function fetchCompetitionsIncrementally(params, { signal, onPage } 
   firstParams.set("limit", String(PAGE_LIMIT));
   firstParams.set("offset", "0");
 
-  const firstPage = await fetchJson(`${API_ROOT}?${firstParams}`, { signal });
+  const firstPage = await fetchJson(`${apiRoot}?${firstParams}`, { signal });
   const firstResults = Array.isArray(firstPage.results) ? firstPage.results : [];
   const firstCount = Number(firstPage.count);
   const totalCount = Number.isFinite(firstCount) ? firstCount : firstResults.length;
@@ -31,7 +32,7 @@ export async function fetchCompetitionsIncrementally(params, { signal, onPage } 
     pageParams.set("offset", String(pageIndex * PAGE_LIMIT));
     remainingPages.push({
       pageIndex,
-      url: `${API_ROOT}?${pageParams}`
+      url: `${apiRoot}?${pageParams}`
     });
   }
 
@@ -40,6 +41,18 @@ export async function fetchCompetitionsIncrementally(params, { signal, onPage } 
     onPage,
     signal
   });
+}
+
+function competitionApiRoot() {
+  if (["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+    return LOCAL_API_ROOT;
+  }
+
+  const configured = window.OPENTRACK_MAP_CONFIG?.apiRoot?.trim().replace(/\/$/, "");
+  if (!configured || configured.includes("__OPENTRACK_API_ROOT__")) {
+    throw new Error("Competition API endpoint is not configured");
+  }
+  return configured;
 }
 
 async function fetchPagesConcurrently(pages, { count, onPage, signal }) {

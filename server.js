@@ -1,6 +1,7 @@
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
+import { handleCompetitionRequest } from "./worker/competitions.js";
 
 const PORT = Number(process.env.PORT || 4173);
 const HOST = process.env.HOST || "127.0.0.1";
@@ -21,6 +22,26 @@ function send(res, status, body, headers = {}) {
     ...headers
   });
   res.end(body);
+}
+
+async function sendWebResponse(res, response) {
+  const body = Buffer.from(await response.arrayBuffer());
+  res.writeHead(response.status, Object.fromEntries(response.headers.entries()));
+  res.end(body);
+}
+
+async function serveCompetitions(req, res, url) {
+  if (req.method !== "GET") {
+    send(res, 405, "Method not allowed", { allow: "GET" });
+    return;
+  }
+
+  const response = await handleCompetitionRequest({
+    request: new Request(url, { method: "GET", headers: req.headers }),
+    env: process.env,
+    cache: null
+  });
+  await sendWebResponse(res, response);
 }
 
 async function serveStatic(req, res) {
@@ -65,6 +86,11 @@ async function serveFileFromRoot(pathname, root, res, options = {}) {
 }
 
 const server = createServer(async (req, res) => {
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  if (url.pathname === "/api/competitions" || url.pathname === "/api/competitions/") {
+    await serveCompetitions(req, res, url);
+    return;
+  }
   await serveStatic(req, res);
 });
 
